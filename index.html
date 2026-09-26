@@ -61,6 +61,11 @@
     .tags{display:flex;flex-wrap:wrap;gap:10px}
     .tag{background:var(--secondary);color:var(--text);padding:8px 12px;border-radius:999px;font-weight:700}
     .schedule-list{display:flex;flex-direction:column;gap:12px}
+    /* Schedule + weather layout */
+    .schedule-wrap{display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start}
+    @media (max-width: 900px){
+      .schedule-wrap{grid-template-columns:1fr;}
+    }
     blockquote{background:#fff;padding:18px;border-radius:10px;border-left:4px solid var(--primary);margin:0}
     footer{padding:28px 0;text-align:center;color:#6b5c71}
 
@@ -246,10 +251,7 @@
         <div class="hero-photo appear" aria-hidden="true">
           <img src="megan-web.jpg" alt="Megan Carson">
         </div>
-        <!-- Weather widget -->
-        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
-          <div id="weather" class="weather-card" role="status" aria-live="polite">Loading weather…</div>
-        </div>
+        
         <div class="hero-left">
           <h1 class="appear">Hello!</h1>
           <p class="lead">Making ballroom dance accessible to all — no dance experience or partner necessary.</p>
@@ -314,10 +316,16 @@
 
     <section id="schedule">
       <h2 style="font-family:'Lora',serif;margin-top:0">Schedule</h2>
-      <div class="schedule-list" style="margin-top:12px">
-        <div><strong>Beginner group class</strong> — Thursdays at 7:30pm, Miami Presbyterian Church</div>
-        <div><strong>Performance team training</strong> — Tuesdays at 7pm, Panorama Tower</div>
-        <div><strong>Private lessons</strong> — DM to schedule</div>
+      <div class="schedule-wrap" style="margin-top:12px">
+        <div class="schedule-list">
+          <div><strong>Beginner group class</strong> — Thursdays at 7:30pm, Miami Presbyterian Church</div>
+          <div style="font-style:italic;font-size:0.95rem;color:var(--text);margin-top:6px">Class is held outside — light rain or shine!</div>
+          <div><strong>Performance team training</strong> — Tuesdays at 7pm, Panorama Tower</div>
+          <div><strong>Private lessons</strong> — DM to schedule</div>
+        </div>
+        <aside>
+          <div id="weather" class="weather-card" role="status" aria-live="polite">Loading weather…</div>
+        </aside>
       </div>
     </section>
 
