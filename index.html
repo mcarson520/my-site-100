@@ -237,7 +237,13 @@
             const label = await lookupLocation(lat, lon, 'Miami');
             fetchWeatherFor(lat, lon, label);
           }, async err=>{
-            // permission denied or error — fallback to Miami
+            // permission denied or other error — show friendly message and fallback to Miami
+            if(err && err.code === 1){
+              // PERMISSION_DENIED
+              setLoading('Enable location to see your weather.');
+            } else {
+              setLoading('Location unavailable — showing Miami.');
+            }
             const fallbackLat = 25.76, fallbackLon = -80.19;
             const label = 'Miami';
             fetchWeatherFor(fallbackLat, fallbackLon, label);
