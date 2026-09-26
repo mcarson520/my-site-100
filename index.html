@@ -54,6 +54,10 @@
     section{padding:48px 0;border-top:1px solid rgba(42,30,59,0.06)}
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
     .card{background:var(--card);padding:18px;border-radius:12px}
+    /* Compact weather card to match site style */
+    .weather-card{display:inline-flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,0.6),var(--card));padding:10px 12px;border-radius:12px;box-shadow:0 8px 20px rgba(42,30,59,0.04);min-width:160px}
+    .weather-emoji{font-size:1.35rem}
+    .weather-temp{font-weight:800;font-size:1.05rem}
     .tags{display:flex;flex-wrap:wrap;gap:10px}
     .tag{background:var(--secondary);color:var(--text);padding:8px 12px;border-radius:999px;font-weight:700}
     .schedule-list{display:flex;flex-direction:column;gap:12px}
@@ -166,6 +170,60 @@
           target.addEventListener('blur', ()=> target.removeAttribute('tabindex'), {once:true});
         });
       });
+      
+      // Weather widget: use browser geolocation and Open-Meteo (no API key)
+      const weatherRoot = document.getElementById('weather');
+      if(weatherRoot){
+        const setLoading = (text) => { weatherRoot.textContent = text; };
+        const setCard = (emoji, tempF, desc) => {
+          weatherRoot.innerHTML = `\n+            <div class="weather-emoji" aria-hidden="true">${emoji}</div>\n+            <div style="display:flex;flex-direction:column">\n+              <div class="weather-temp">${Math.round(tempF)}°F</div>\n+              <div style="font-size:0.9rem;color:var(--text)">${desc}</div>\n+            </div>`;
+        };
+
+        const codeToEmoji = (code) => {
+          if(code === 0) return '☀️';
+          if(code === 1 || code === 2) return '⛅';
+          if(code === 3) return '☁️';
+          if(code >= 45 && code <= 48) return '🌫️';
+          if((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️';
+          if((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return '❄️';
+          if(code >= 95 && code <= 99) return '⛈️';
+          return '🌤️';
+        };
+
+        const codeToText = (code) => {
+          if(code === 0) return 'Clear';
+          if(code === 1 || code === 2) return 'Partly cloudy';
+          if(code === 3) return 'Overcast';
+          if(code >= 45 && code <= 48) return 'Fog';
+          if((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'Rain';
+          if((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'Snow';
+          if(code >= 95 && code <= 99) return 'Thunder';
+          return 'Weather';
+        };
+
+        const fetchWeatherFor = (lat, lon) => {
+          setLoading('Loading weather...');
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`;
+          fetch(url).then(r=>r.json()).then(data=>{
+            if(!data || !data.current_weather){ setLoading('Weather unavailable'); return; }
+            const cw = data.current_weather;
+            const emoji = codeToEmoji(cw.weathercode);
+            const desc = codeToText(cw.weathercode);
+            setCard(emoji, cw.temperature, desc);
+          }).catch(()=> setLoading('Weather error'));
+        };
+
+        if(navigator.geolocation){
+          setLoading('Locating...');
+          navigator.geolocation.getCurrentPosition(pos=>{
+            fetchWeatherFor(pos.coords.latitude, pos.coords.longitude);
+          }, err=>{
+            setLoading('Location blocked');
+          }, {maximumAge:600000,timeout:8000});
+        } else {
+          setLoading('Geolocation not supported');
+        }
+      }
     });
   </script>
 </head>
@@ -187,6 +245,10 @@
       <div style="display:flex;align-items:center;gap:24px;width:100%">
         <div class="hero-photo appear" aria-hidden="true">
           <img src="megan-web.jpg" alt="Megan Carson">
+        </div>
+        <!-- Weather widget -->
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <div id="weather" class="weather-card" role="status" aria-live="polite">Loading weather…</div>
         </div>
         <div class="hero-left">
           <h1 class="appear">Hello!</h1>
