@@ -55,7 +55,8 @@
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
     .card{background:var(--card);padding:18px;border-radius:12px}
     /* Compact weather card to match site style */
-    .weather-card{display:inline-flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,0.6),var(--card));padding:10px 12px;border-radius:12px;box-shadow:0 8px 20px rgba(42,30,59,0.04);min-width:160px}
+    .weather-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:linear-gradient(180deg,rgba(255,255,255,0.6),var(--card));padding:10px 12px;border-radius:12px;box-shadow:0 8px 20px rgba(42,30,59,0.04);min-width:160px}
+    .weather-location{font-size:0.85rem;color:var(--text);opacity:0.9}
     .weather-emoji{font-size:1.35rem}
     .weather-temp{font-weight:800;font-size:1.05rem}
     .tags{display:flex;flex-wrap:wrap;gap:10px}
@@ -180,8 +181,10 @@
       const weatherRoot = document.getElementById('weather');
       if(weatherRoot){
         const setLoading = (text) => { weatherRoot.textContent = text; };
-        const setCard = (emoji, tempF, desc) => {
-          weatherRoot.innerHTML = `\n+            <div class="weather-emoji" aria-hidden="true">${emoji}</div>\n+            <div style="display:flex;flex-direction:column">\n+              <div class="weather-temp">${Math.round(tempF)}°F</div>\n+              <div style="font-size:0.9rem;color:var(--text)">${desc}</div>\n+            </div>`;
+        const setCard = (locationLabel, emoji, tempF, desc) => {
+          weatherRoot.innerHTML = `
+            <div class="weather-location">${locationLabel}</div>
+            <div style="display:flex;align-items:center;gap:12px">\n              <div class="weather-emoji" aria-hidden="true">${emoji}</div>\n              <div style="display:flex;flex-direction:column">\n                <div class="weather-temp">${Math.round(tempF)}°F</div>\n                <div style="font-size:0.9rem;color:var(--text)">${desc}</div>\n              </div>\n            </div>`;
         };
 
         const codeToEmoji = (code) => {
@@ -206,7 +209,7 @@
           return 'Weather';
         };
 
-        const fetchWeatherFor = (lat, lon) => {
+        const fetchWeatherFor = (lat, lon, locationLabel) => {
           setLoading('Loading weather...');
           const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`;
           fetch(url).then(r=>r.json()).then(data=>{
@@ -214,19 +217,34 @@
             const cw = data.current_weather;
             const emoji = codeToEmoji(cw.weathercode);
             const desc = codeToText(cw.weathercode);
-            setCard(emoji, cw.temperature, desc);
+            setCard(locationLabel, emoji, cw.temperature, desc);
           }).catch(()=> setLoading('Weather error'));
+        };
+
+        const lookupLocation = (lat, lon, fallbackLabel = 'Miami') => {
+          return fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`).then(r=>r.json()).then(data=>{
+            if(data && (data.city || data.locality || data.principalSubdivision)){
+              return data.city || data.locality || data.principalSubdivision || fallbackLabel;
+            }
+            return fallbackLabel;
+          }).catch(()=> fallbackLabel);
         };
 
         if(navigator.geolocation){
           setLoading('Locating...');
-          navigator.geolocation.getCurrentPosition(pos=>{
-            fetchWeatherFor(pos.coords.latitude, pos.coords.longitude);
-          }, err=>{
-            setLoading('Location blocked');
+          navigator.geolocation.getCurrentPosition(async pos=>{
+            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            const label = await lookupLocation(lat, lon, 'Miami');
+            fetchWeatherFor(lat, lon, label);
+          }, async err=>{
+            // permission denied or error — fallback to Miami
+            const fallbackLat = 25.76, fallbackLon = -80.19;
+            const label = 'Miami';
+            fetchWeatherFor(fallbackLat, fallbackLon, label);
           }, {maximumAge:600000,timeout:8000});
         } else {
-          setLoading('Geolocation not supported');
+          // geolocation not supported — use Miami
+          fetchWeatherFor(25.76, -80.19, 'Miami');
         }
       }
     });
