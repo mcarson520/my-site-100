@@ -29,9 +29,14 @@
       -moz-osx-font-smoothing:grayscale;
       line-height:1.5;
     }
+    html{scroll-padding-top:92px}
+    section,header.hero,[id]{scroll-margin-top:92px}
     .wrap{max-width:var(--max-w);margin:0 auto;padding:36px}
-    nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;position:sticky;top:0;z-index:100;background:transparent;transition:box-shadow .22s,background .22s}
-    nav.scrolled{background:var(--bg);box-shadow:0 6px 18px rgba(42,30,59,0.06)}
+    nav{position:sticky;top:0;z-index:100;background:var(--bg);box-shadow:0 2px 12px rgba(42,30,59,0.08);padding:12px 0}
+    /* ensure nav's inner .wrap positions brand left and links right (revert) */
+    nav > .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 36px}
+    /* reverted: no full-width background/shadow on scroll */
+    /* keep brand left and links right (no inner wrapper) */
     .brand{font-family:'Lora',serif;font-size:1.25rem;color:var(--text)}
     .nav-links{display:flex;gap:18px;align-items:center}
     .nav-links a{color:var(--text);text-decoration:none;font-weight:700}
@@ -89,6 +94,8 @@
       header.hero{gap:14px}
       .hero-photo{width:120px;height:120px}
       .social-btn{width:40px;height:40px}
+      /* restore nav inner wrap to default (no extra padding) */
+      nav > .wrap{padding:0 20px}
     }
 
     /* Hover states */
@@ -151,32 +158,6 @@
         revealEls.forEach(el=>el.classList.add('show'));
       }
 
-      // Smooth in-page scrolling for anchor links (respect reduced motion)
-      const anchorLinks = Array.from(document.querySelectorAll('a[href^="#"]'));
-      anchorLinks.forEach(a => {
-        a.addEventListener('click', function(e){
-          const hash = a.getAttribute('href');
-          if(!hash || hash === '#') return;
-          const target = document.querySelector(hash);
-          if(!target) return;
-          e.preventDefault();
-          const nav = document.querySelector('nav');
-          const offset = nav ? nav.offsetHeight : 0;
-          const top = target.getBoundingClientRect().top + window.scrollY - offset - 12;
-          if(prefersReduce){
-            window.scrollTo(0, top);
-            history.pushState(null, '', hash);
-            return;
-          }
-          window.scrollTo({ top, behavior: 'smooth' });
-          try{ history.pushState(null, '', hash); }catch(e){}
-          // make focusable for keyboard users
-          target.setAttribute('tabindex','-1');
-          target.focus({preventScroll:true});
-          target.addEventListener('blur', ()=> target.removeAttribute('tabindex'), {once:true});
-        });
-      });
-      
       // Weather widget: use browser geolocation and Open-Meteo (no API key)
       const weatherRoot = document.getElementById('weather');
       if(weatherRoot){
@@ -257,19 +238,21 @@
   </script>
 </head>
 <body>
-  <div class="wrap">
     <nav>
-      <div class="brand">Megan Carson</div>
-      <div class="nav-links">
-        <a href="#about">About</a>
-        <a href="#offerings">Offerings</a>
-        <a href="#styles">Styles</a>
-        <a href="#schedule">Schedule</a>
-        <a href="#testimonials">Testimonials</a>
-        <a class="btn" href="#contact">Contact Me</a>
+      <div class="wrap">
+        <div class="brand">Megan Carson</div>
+        <div class="nav-links">
+          <a href="#about">About</a>
+          <a href="#offerings">Offerings</a>
+          <a href="#styles">Styles</a>
+          <a href="#schedule">Schedule</a>
+          <a href="#testimonials">Testimonials</a>
+          <a class="btn" href="#contact">Contact Me</a>
+        </div>
       </div>
     </nav>
 
+    <div class="wrap">
     <header class="hero" id="home">
       <div style="display:flex;align-items:center;gap:24px;width:100%">
         <div class="hero-photo appear" aria-hidden="true">
